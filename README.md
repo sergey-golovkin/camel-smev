@@ -1,0 +1,111 @@
+# camel-smev 
+
+Реализация apache camel компоненты для доступа к СМЭВ3.
+
+## Версии
+JRE: 11
+
+Apache Camel: 3.20
+
+
+### [Сборка]
+
+### [Примеры использования]
+
+Чтение из очереди СМЭВ3:
+```xml
+    <from uri="smev3:[mode]?[delay]&amp;[bodyType]&amp;[version]&amp;[nodeId]&amp;[errorDelay]&amp;[rootElementLocalName]&amp;[namespaceURI]"/>
+		mode=request|response|status - тип очереди откуда производится чтение. Обязательный параметр.
+		bodyType=content|envelop|smevmessage - тип содержимого, которе будет помещено в ${body}
+				 content - бизнес содержимое вида сведений СМЭВ3 полученное из очереди. По умолчанию content.
+				 envelop - полное soap сообщение полученное из очереди
+				 smevmessage - объект SMEVMessage полученный из очереди
+		version=1.1|1.2|1.3 - версия пакета обмена СМЭВ3. По умолчанию 1.3
+		nodeId=наименование ноды, если идет прллельная обработка сообщений. Не обязательный параметр.
+		rootElementLocalName=нименование корневого тега вида сведений СМЭВ3. Не обязательный параметр
+		namespaceURI=наименование пространства имен корневого тега вида сведений СМЭВ3. Не обязательный параметр
+				Усли не указывать rootElementLocalName и namespaceURI, то будут читаться все сообщения из очереди.
+		errorDelay=задержка в миллисекундах, в случае сбоя обработки входящего сообщения. По умолчанию 60 сек.
+
+	После операции чтения из очереди СМЭВ3 заполняются:
+	
+	1. body - в зависимости от bodyType
+
+	2. все вложения, при их наличии в полученном виде сведений.
+
+	Для работы с вложениями используется стандартный механизм apache camel.
+		AttachmentMessage attMsg = exchange.getIn(AttachmentMessage.class);
+		Attachment attachment = attMsg.getAttachmentObject("myAttachment");
+		DataHandler dh = attachment.getDataHandler();
+
+	3. заголовки (при их наличии в сообщении):
+
+	    header.CamelSmev3MessageId - Идентификатор, присвоенный сообщению отправителем. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
+   	 	header.CamelSmev3MessageOriginalId - Идентификатор исходного Request сообщения для которого отправляется Response. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
+   	 	header.CamelSmev3MessageReferenceId - Идентификатор сообщения, порождающего цепочку сообщений. При отправке подчиненных сообщений значение соответствует MessageID корневого сообщения цепочки сообщений. Для корневого сообщения значение совпадает с MessageID.
+		header.CamelSmev3MetadataTransactionCode - Идентификатор кода транзакции.
+	    header.CamelSmev3MetadataNodeId - Идентификатор ноды отправителя.
+   		header.CamelSmev3MetadataTestMessage - Если этот элемент присутствует, то запрос - тестовый. В этом случае, ИС-поставщик данных должна гарантировать, что её данные не будут изменены в результате выполнения этого запроса.
+    	header.CamelSmev3MetadataTransportId - Наименование транспорта
+   		header.CamelSmev3MetadataMessageType - Тип сообщения
+    	header.CamelSmev3MetadataSenderMnemonic - Мнемоника отправителя. Для машинной обработки. Вычисляется на основании данных сетрификата.
+    	header.CamelSmev3MetadataSenderHumanReadableName - Наименование отправителя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
+    	header.CamelSmev3MetadataSendingTimestamp - Дата и время отправки сообщения в СМЭВ, начиная с которых отсчитывается срок исполнения запроса.
+    	header.CamelSmev3MetadataRecipientMnemonic - Мнемоника получателя. Для машинной обработки. Вычисляется на основании данных сетрификата.
+    	header.CamelSmev3MetadataRecipientHumanReadableName - Наименование получателя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
+    	header.CamelSmev3MetadataDeliveryTimestamp - Дата и время доставки сообщения, по часам СМЭВ.
+    	header.CamelSmev3MetadataStatus - Статус сообщения.
+    	header.CamelSmev3MessageReplyTo - Аналог обратного адреса; непрозрачный объект, по которому СМЭВ сможет вычислить, кому доставить ответ на этот запрос. При отправке ответа нужно скопировать это значение в //SenderProvidedResponseData/To/text(). N.B. Формат обратного адреса не специфицирован, и может меняться со временем. Больше того, в запросах, пришедших от одного и того же отправителя через сколь угодно малый промежуток времени, обратный адрес не обязан быть одним и тем же. Если получатель хочет идентифицировать отправителя, можно использовать сертификат отправителя (//GetMessageIfAnyResponse/CallerInformationSystemSignature/xmldsig:Signature/...)
+    	header.CamelSmev3MessageStatusCode - Код статуса.
+    	header.CamelSmev3MessageRejectionReasonCode - Код причины отклонения запроса.
+    	header.CamelSmev3MessageDescription - Причина отклонения запроса, в человекочитаемом виде.
+    	header.CamelSmev3MessageAccepted - Признак необходимости произвести подтверждение операции чтения. Если присутствует в сообщении, то подтверждение отправляется в СМЭВ автоматически. Значение \"acceped\" берется из этого поля. Может быть true или false.
+    	header.CamelSmev3ContentNamespaceURI - Наименование пространства имен бизнес сообщения.
+    	header.CamelSmev3ContentRootElementLocalName - Наименование корневого тега бизнес сообщения без префикса пространства имен.
+    	header.CamelSmev3ContentPersonalSignature - ЭП отправителя сообщения
+    	header.CamelSmev3MetadataExceptionCause - Причина ошибки
+    	header.CamelSmev3MetadataExceptionStackTrace - Стэк трейс ошибки на стороне СМЭВ
+    	header.CamelSmev3MetadataExceptionMessage - Сообщение об ошибке
+    	header.CamelSmev3MetadataExceptionLocalizedMessage - Локализованное сообщение об ошибке
+    	header.CamelSmev3MetadataExceptionCode - Код ошибки
+    	header.CamelSmev3MetadataExceptionDump - Exception dump
+
+```
+
+Запись в очередь:    
+```xml
+    <to uri="smev3:[mode]?[version]&amp;"/>
+		mode=request|response|status|ack|reject - тип очереди куда производится запись. Обязательный параметр.
+		version=1.1|1.2|1.3 - версия пакета обмена СМЭВ3. По умолчанию 1.3
+
+	Перед операцией отправки в очередь СМЭВ3 заполняются:
+	
+	1. body - бизнес содержимое вида сведений СМЭВ3
+
+	2. все вложения, при их наличии в полученном виде сведений.
+
+	Для работы с вложениями используется стандартный механизм apache camel.
+	Для каждого вложения необходимо заполнить заголовки вложения:
+		AttachmentName
+		AttachmentMimeType
+		AttachmentLength
+
+		Так же, если для передачи вложения используется FileDataSource, то обязательно указать полный путь до файла в заголовке AttachmentContentRef.
+
+        AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
+        File f = new File("myAttachment.pdf");
+        Attachment a = new DefaultAttachment(new DataHandler(new FileDataSource(f)));
+        a.setHeader("AttachmentLength", Long.toString(f.length()));
+        a.setHeader("AttachmentMimeType", "application/pdf");
+        a.setHeader("AttachmentContentRef", f.getPath());
+        a.setHeader("AttachmentName", f.getName());
+        attachmentMessage.addAttachmentObject(f.getName(), a);
+
+	3. заголовки сообщения:
+
+ 		header.CamelSmev3MessageOriginalId - Идентификатор исходного Request сообщения для которого отправляется Response. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
+    	header.CamelSmev3MetadataTransportId - Наименование транспорта
+		header.CamelSmev3MetadataTransactionCode - Идентификатор кода транзакции.
+    	header.CamelSmev3MessageReplyTo - Аналог обратного адреса; непрозрачный объект, по которому СМЭВ сможет вычислить, кому доставить ответ на этот запрос. При отправке ответа нужно скопировать это значение в //SenderProvidedResponseData/To/text(). N.B. Формат обратного адреса не специфицирован, и может меняться со временем. Больше того, в запросах, пришедших от одного и того же отправителя через сколь угодно малый промежуток времени, обратный адрес не обязан быть одним и тем же. Если получатель хочет идентифицировать отправителя, можно использовать сертификат отправителя (//GetMessageIfAnyResponse/CallerInformationSystemSignature/xmldsig:Signature/...)
+		
+```
