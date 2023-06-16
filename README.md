@@ -117,3 +117,20 @@ Apache Camel: 3.20
     	header.CamelSmev3MessageReplyTo - Аналог обратного адреса; непрозрачный объект, по которому СМЭВ сможет вычислить, кому доставить ответ на этот запрос. При отправке ответа нужно скопировать это значение в //SenderProvidedResponseData/To/text(). N.B. Формат обратного адреса не специфицирован, и может меняться со временем. Больше того, в запросах, пришедших от одного и того же отправителя через сколь угодно малый промежуток времени, обратный адрес не обязан быть одним и тем же. Если получатель хочет идентифицировать отправителя, можно использовать сертификат отправителя (//GetMessageIfAnyResponse/CallerInformationSystemSignature/xmldsig:Signature/...)
 		
 ```
+
+Так же в application.properties должны быть добавлены настройки (как минимум) подробнее в Smev3Configuration.java
+
+smev3.jcp.license.key = 
+
+smev3.signer.certificate.alias = 
+smev3.signer.private.key.alias = 
+smev3.signer.private.key.password = 
+smev3.signer.key.store.type = 
+
+smev3.transport.1.2.main.url = http://smev3-n0.test.gosuslugi.ru:7500/smev/v1.2/ws
+smev3.transport.1.3.main.url = http://smev3-n0.test.gosuslugi.ru:5000/transport_1_0_2/
+
+smev3.large.attachment.transport.address = smev3-n0.test.gosuslugi.ru
+smev3.large.attachment.transport.login = 
+smev3.large.attachment.transport.password = 
+smev3.large.attachment.threshold = 1048576
