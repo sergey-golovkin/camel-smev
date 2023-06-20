@@ -53,7 +53,8 @@ public class Smev3Constants
 
     public static void set(Attachment attachment, String name, Object value)
     {
-        attachment.setHeader(name, value.toString());
+        if(value != null)
+            attachment.setHeader(name, value.toString());
     }
 
     public static void fillExchangeHeaders(Exchange exchange, SMEVMetadata smevMetadata)
@@ -108,27 +109,24 @@ public class Smev3Constants
 
     public static String printStackTrace(StackTraceElement[] trace)
     {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (StackTraceElement traceElement : trace)
-            sb.append("\tat " + traceElement);
+            sb.append("\tat ").append(traceElement);
 
         return sb.toString();
     }
     public static String printException(Exception ex)
     {
-        PrintWriter pw = null;
-        try
+        try(StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw))
         {
-            StringWriter sw = new StringWriter();
-            pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
             return sw.toString();
         }
-        catch (Exception ignore){ return "oops!"; }
-        finally
+        catch (Exception ignore)
         {
-            try { pw.close(); } catch (Exception ignore){ }
+            return "oops!";
         }
     }
 
@@ -143,7 +141,7 @@ public class Smev3Constants
     public static final String SMEV3_MESSAGE_REFERENCE_ID = SMEV3_HEADER_PREFIX + "MessageReferenceId";
     @Metadata(description = "Идентификатор кода транзакции.")
     public static final String SMEV3_METADATA_TRANSACTION_CODE = SMEV3_HEADER_PREFIX + "MetadataTransactionCode";
-    @Metadata(description = "Идентификатор нода отправителя.")
+    @Metadata(description = "Идентификатор ноды отправителя.")
     public static final String SMEV3_METADATA_NODEID = SMEV3_HEADER_PREFIX + "MetadataNodeId";
     @Metadata(description = "Если этот элемент присутствует, то запрос - тестовый. В этом случае, ИС-поставщик данных должна гарантировать, что её данные не будут изменены в результате выполнения этого запроса.")
     public static final String SMEV3_METADATA_TESTMESSAGE = SMEV3_HEADER_PREFIX + "MetadataTestMessage";
@@ -203,6 +201,12 @@ public class Smev3Constants
     public static final String SMEV3_EXCEPTION_CODE = SMEV3_HEADER_PREFIX + "MetadataExceptionCode";
     @Metadata(description = "Exception dump")
     public static final String SMEV3_EXCEPTION_DUMP = SMEV3_HEADER_PREFIX + "MetadataExceptionDump";
-//    @Metadata(description = "")
-//    public static final String SMEV3_ = SMEV3_HEADER_PREFIX + "";
+
+    public static final String SMEV3_ATTACHMENT_MIMETYPE = "AttachmentMimeType";
+    public static final String SMEV3_ATTACHMENT_SIGNATUREPKCS7 = "AttachmentSignaturePKCS7";
+    public static final String SMEV3_ATTACHMENT_PASSPORTID = "AttachmentPassportId";
+    public static final String SMEV3_ATTACHMENT_UUID = "AttachmentUUId";
+    public static final String SMEV3_ATTACHMENT_NAME = "AttachmentName";
+    public static final String SMEV3_ATTACHMENT_LENGTH = "AttachmentLength";
+    public static final String SMEV3_ATTACHMENT_HASH = "AttachmentHash";
 }

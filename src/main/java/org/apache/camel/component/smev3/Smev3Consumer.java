@@ -5,6 +5,7 @@ import org.apache.camel.attachment.Attachment;
 import org.apache.camel.attachment.AttachmentMessage;
 import org.apache.camel.attachment.DefaultAttachment;
 import org.apache.camel.component.smev3.strategy.AttachmentsStrategy;
+import org.apache.camel.component.smev3.attachments.ApacheFTPTransport;
 import org.apache.camel.spi.PollingConsumerPollStrategy;
 import org.apache.camel.support.ScheduledPollConsumer;
 import org.apache.xerces.impl.dv.util.Base64;
@@ -12,7 +13,6 @@ import ru.voskhod.crypto.XMLTransformHelper;
 import ru.voskhod.smev.client.api.factory.Factory;
 import ru.voskhod.smev.client.api.services.signature.Signer;
 import ru.voskhod.smev.client.api.services.template.WSTemplate;
-import ru.voskhod.smev.client.api.services.transport.LargeAttachmentTransport;
 import ru.voskhod.smev.client.api.signature.impl.SignerFactory;
 import ru.voskhod.smev.client.api.types.exception.SMEVException;
 import ru.voskhod.smev.client.api.types.exception.SMEVRuntimeException;
@@ -21,8 +21,8 @@ import ru.voskhod.smev.client.api.types.message.attachment.LargeAttachment;
 import ru.voskhod.smev.client.api.types.message.attachment.MTOMAttachment;
 import ru.voskhod.smev.client.api.types.message.attachment.SMEVAttachment;
 import ru.voskhod.smev.client.api.types.message.system.processing.ProcessingInformation;
-
 import javax.activation.DataHandler;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +30,12 @@ import java.util.List;
 public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsumerPollStrategy
 {
     private final Smev3Configuration conf;
-    private WSTemplate wsTemplate;
-    private Signer signer;
-    private LargeAttachmentTransport laTransport;
+    private final WSTemplate wsTemplate;
+    private final Signer signer;
+    private final ApacheFTPTransport laTransport;
     private SMEVMessage message;
     private Boolean accepted;
-    private List<DataHandler> attachments = new ArrayList<>();
+    private final List<DataHandler> attachments = new ArrayList<>();
 
     Smev3Consumer(Smev3Endpoint endpoint, Processor processor, Smev3Configuration conf) throws FailedToCreateConsumerException
     {
@@ -56,10 +56,10 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                     Factory.getMessageMapperInstance(conf.getWSTemplateConfiguration().getMessageGenerationConfig(), conf.getSmevVersion()),
                     Factory.getMessageTransportInstance(conf.getGeoTemplateConfiguration().getGeoMessageTransportConfiguration(), conf.getSmevVersion()),
                     Factory.getExceptionMapperInstance(conf.getWSTemplateConfiguration().getMessageGenerationConfig(), conf.getSmevVersion()),
-                    null, //Factory.getLargeAttachmentTransportInstance(conf.getLargeAttachmentTransportConfiguration(), conf.getSmevVersion()),
+                    null, // must be null, use laTransport instead
                     conf.getGeoTemplateConfiguration(),
                     conf.getSmevVersion());
-            laTransport = Factory.getLargeAttachmentTransportInstance(conf.getLargeAttachmentTransportConfiguration(), conf.getSmevVersion());
+            laTransport = new ApacheFTPTransport(conf.getLargeAttachmentTransportConfiguration());
         }
         catch (SMEVRuntimeException e)
         {
@@ -104,41 +104,21 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
             }
 
             Smev3Constants.fillExchangeHeaders(exchange, message.getSMEVMetadata());
-            fillExchangeAttachments(exchange, message, laTransport);
-
+            fillExchangeAttachments(exchange, message);
             Smev3Constants.set(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true);
-
             this.getProcessor().process(exchange);
-
             accepted = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, Boolean.class);
-
             return 1; // polled messages
         }
         finally
         {
-            doneAttachments();
+            AttachmentsStrategy attachmentsStrategy = conf.getAttachmentsStrategy();
+            attachments.forEach(dh -> { try { attachmentsStrategy.done(dh); } catch(Exception ex) { } });
+            attachments.clear();
         }
     }
 
-    private void doneAttachments()
-    {
-        AttachmentsStrategy attachmentsStrategy = conf.getAttachmentsStrategy();
-
-        for(DataHandler dh : attachments)
-        {
-            try
-            {
-                attachmentsStrategy.done(dh);
-            }
-            catch (Exception e)
-            {
-            }
-        }
-
-        attachments.clear();
-    }
-
-    private void fillExchangeAttachments(Exchange exchange, SMEVMessage message, LargeAttachmentTransport laTransport) throws Exception
+    private void fillExchangeAttachments(Exchange exchange, SMEVMessage message) throws Exception
     {
         if(message != null && message.getData() != null)
         {
@@ -155,25 +135,27 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             exchange,
                             message.getSMEVMetadata().getMessageIdentity().getMessageId(),
                             mtomAttachment.getAttachmentId(),
-                            mtomAttachment.getContent().getName(),
+                            mtomAttachment.getAttachmentId(),
                             mtomAttachment.getMimeType(),
                             mtomAttachment.getSignaturePKCS7()
                     );
                     attachments.add(dataHandler);
 
-                    OutputStream outputStream = dataHandler.getOutputStream();
-                    try { mtomAttachment.getContent().getInputStream().transferTo(outputStream); } // fill
-                    finally { outputStream.flush(); outputStream.close(); }
+                    try(OutputStream outputStream = dataHandler.getOutputStream();
+                        InputStream inputStream = mtomAttachment.getContent().getInputStream())
+                    {
+                        inputStream.transferTo(outputStream);
+                    }
 
                     Attachment a = new DefaultAttachment(dataHandler);
-                    Smev3Constants.set(a,"AttachmentMimeType", attachment.getMimeType());
-                    Smev3Constants.set(a,"AttachmentUUId", mtomAttachment.getAttachmentId());
-                    Smev3Constants.set(a,"AttachmentName", mtomAttachment.getAttachmentId());
-                    Smev3Constants.set(a,"AttachmentSignaturePKCS7", Base64.encode(attachment.getSignaturePKCS7()));
-                    Smev3Constants.set(a,"AttachmentPassportId", attachment.getPassportId());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_UUID, mtomAttachment.getAttachmentId());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_NAME, mtomAttachment.getAttachmentId());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
 
                     if(attachmentsStrategy.process(exchange, a, dataHandler))
-                        attachmentMessage.addAttachmentObject(mtomAttachment.getContent().getName(), a);
+                        attachmentMessage.addAttachmentObject(mtomAttachment.getAttachmentId(), a);
                 }
                 else if(attachment instanceof LargeAttachment)
                 {
@@ -189,23 +171,24 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             );
                     attachments.add(dataHandler);
 
-                    OutputStream outputStream = dataHandler.getOutputStream();
-                    try { laTransport.download(largeAttachment, outputStream); } // fill
-                    finally { outputStream.flush(); outputStream.close(); }
+                    try(OutputStream outputStream = dataHandler.getOutputStream())
+                    {
+                        laTransport.download(largeAttachment, outputStream);
+                    }
 
                     Attachment a = new DefaultAttachment(dataHandler);
-                    Smev3Constants.set(a,"AttachmentMimeType", attachment.getMimeType());
-                    Smev3Constants.set(a,"AttachmentUUId", largeAttachment.getUuid().toString());
-                    Smev3Constants.set(a,"AttachmentName", largeAttachment.getFileRef());
-                    Smev3Constants.set(a,"AttachmentSignaturePKCS7", Base64.encode(attachment.getSignaturePKCS7()));
-                    Smev3Constants.set(a,"AttachmentPassportId", attachment.getPassportId());
-                    Smev3Constants.set(a,"AttachmentHash", largeAttachment.getHash());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_UUID, largeAttachment.getUuid().toString());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_NAME, largeAttachment.getFileRef());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
+                    Smev3Constants.set(a,Smev3Constants.SMEV3_ATTACHMENT_HASH, largeAttachment.getHash());
 
                     if(attachmentsStrategy.process(exchange, a, dataHandler))
                         attachmentMessage.addAttachmentObject(largeAttachment.getUuid().toString(), a);
                 }
                 else
-                    throw new Exception(); // TODO log
+                    throw new Exception("Unexpected attachment type"); // TODO log
             }
         }
     }

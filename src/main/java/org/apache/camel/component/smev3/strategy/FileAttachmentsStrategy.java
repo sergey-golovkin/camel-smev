@@ -13,27 +13,30 @@ import java.nio.file.Paths;
 public class FileAttachmentsStrategy implements AttachmentsStrategy
 {
     private String attachmentsStore;
+    private boolean remove;
 
     public FileAttachmentsStrategy()
     {
-        attachmentsStore = Paths.get(System.getProperty("java.io.tmpdir"), "smev3", "fileattachments").toString();
+        this.attachmentsStore = Paths.get(System.getProperty("java.io.tmpdir"), "smev3", "fileattachments").toString();
+        this.remove = true;
     }
 
-    public FileAttachmentsStrategy(String attachmentsStore)
+    public FileAttachmentsStrategy(String attachmentsStore, boolean remove)
     {
         this.attachmentsStore = attachmentsStore;
+        this.remove = remove;
     }
 
     @Override
     public DataHandler get(Exchange exchange, String messageId, String attachmentId, String attachmentName, String mimeType, byte[] signaturePKCS7) throws Exception
     {
-        return new DataHandler(new FileDataSource(new File(Paths.get(attachmentsStore, messageId , attachmentName).toUri())));
+        FileUtils.forceMkdir(new File(Paths.get(attachmentsStore, messageId).toUri()));
+        return new DataHandler(new FileDataSource(new File(Paths.get(attachmentsStore, messageId, attachmentName).toUri())));
     }
 
     @Override
     public boolean process(Exchange exchange, Attachment attachment, DataHandler dataHandler) throws Exception
     {
-        Smev3Constants.set(attachment, "AttachmentContentRef", ((FileDataSource)dataHandler.getDataSource()).getFile().getPath());
         Smev3Constants.set(attachment, "AttachmentLength", ((FileDataSource)dataHandler.getDataSource()).getFile().length());
         return true;
     }
@@ -41,6 +44,7 @@ public class FileAttachmentsStrategy implements AttachmentsStrategy
     @Override
     public void done(DataHandler dataHandler) throws Exception
     {
-        FileUtils.deleteQuietly(((FileDataSource)dataHandler.getDataSource()).getFile());
+        if(remove)
+            FileUtils.deleteQuietly(((FileDataSource) dataHandler.getDataSource()).getFile().getParentFile());
     }
 }

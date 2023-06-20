@@ -82,7 +82,6 @@ class Smev3Configuration
     private boolean loggingOutput;
     private boolean validateSMEVSignature;
 
-    private String localStorage;
     private String messageStorage;
 
     private SignerConfiguration signerConfiguration;
@@ -166,7 +165,6 @@ class Smev3Configuration
         loggingOutput = environment.getProperty("smev3.log.output", Boolean.class, false);
         validateSMEVSignature = environment.getProperty("smev3.validate.smev.signature", Boolean.class, true);
 
-        localStorage = environment.getProperty("smev3.local.storage", String.class, null);
         messageStorage = environment.getProperty("smev3.message.storage", String.class, null);
 
         attachmentsStrategy = component.getAndRemoveOrResolveReferenceParameter(parameters, "attachmentsStrategy", AttachmentsStrategy.class, new InMemoryAttachmentsStrategy());
@@ -378,8 +376,8 @@ class Smev3Configuration
 
                 public String getLocalStorage()
                 {
-                    return localStorage;
-                }
+                    return null;
+                } // Must be null
 
                 public String getMessageStorage()
                 {
@@ -454,8 +452,8 @@ class Smev3Configuration
 
                 public String getLocalStorage()
                 {
-                    return localStorage;
-                }
+                    return null;
+                } // Must be null
 
                 public String getMessageStorage()
                 {

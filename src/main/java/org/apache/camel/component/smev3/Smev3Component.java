@@ -5,9 +5,10 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import org.apache.camel.spi.annotations.Component;
 import org.apache.camel.support.DefaultComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
-
 import java.security.Security;
 import ru.CryptoPro.JCP.JCP;
 import ru.CryptoPro.JCP.tools.License;
@@ -16,6 +17,7 @@ import ru.CryptoPro.JCP.pref.ConfigurationException;
 @Component("smev3")
 public class Smev3Component extends DefaultComponent implements EnvironmentAware
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Smev3Component.class);
     private Environment environment;
 
     public Smev3Component()
@@ -38,9 +40,9 @@ public class Smev3Component extends DefaultComponent implements EnvironmentAware
             License license = new License("", "", environment.getProperty("smev3.jcp.license.key"));
             license.store();
         }
-        catch (ConfigurationException e)
+        catch (ConfigurationException ex)
         {
-            // TODO log
+            LOGGER.error("setEnvironment: {} {}", ex.getMessage(), ex);
         }
     }
 
