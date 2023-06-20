@@ -12,6 +12,23 @@ Apache Camel: 3.20
 
 Для сборки требуются бибилиотеки:
 - клиента СМЭВ3 версии 3.1.8 - берутся с сайта госуслуг.
+	
+Используются модули:
+
+		api-3.1.8.jar
+		commons-3.1.8.jar
+		crypto-adapter-1.2.jar
+		factory-3.1.8.jar
+		identification-3.1.8.jar
+		message-3.1.8.jar
+		server-api-3.1.8.jar
+		signature-3.1.8.jar
+		template-3.1.8.jar
+		transaction-3.1.8.jar
+		transport-3.1.8.jar
+		util-3.1.8.jar
+		validation-3.1.8.jar
+
 - крипто провайдера Крипто-Про - покупаются у соответсующего поставщика.
 - apache camel 3.20
 
@@ -48,35 +65,35 @@ Apache Camel: 3.20
 
 	3. заголовки (при их наличии в сообщении):
 
-	    header.CamelSmev3MessageId - Идентификатор, присвоенный сообщению отправителем. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
-   	 	header.CamelSmev3MessageOriginalId - Идентификатор исходного Request сообщения для которого отправляется Response. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
-   	 	header.CamelSmev3MessageReferenceId - Идентификатор сообщения, порождающего цепочку сообщений. При отправке подчиненных сообщений значение соответствует MessageID корневого сообщения цепочки сообщений. Для корневого сообщения значение совпадает с MessageID.
-		header.CamelSmev3MetadataTransactionCode - Идентификатор кода транзакции.
-	    header.CamelSmev3MetadataNodeId - Идентификатор ноды отправителя.
-   		header.CamelSmev3MetadataTestMessage - Если этот элемент присутствует, то запрос - тестовый. В этом случае, ИС-поставщик данных должна гарантировать, что её данные не будут изменены в результате выполнения этого запроса.
-    	header.CamelSmev3MetadataTransportId - Наименование транспорта
-   		header.CamelSmev3MetadataMessageType - Тип сообщения
-    	header.CamelSmev3MetadataSenderMnemonic - Мнемоника отправителя. Для машинной обработки. Вычисляется на основании данных сетрификата.
-    	header.CamelSmev3MetadataSenderHumanReadableName - Наименование отправителя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
-    	header.CamelSmev3MetadataSendingTimestamp - Дата и время отправки сообщения в СМЭВ, начиная с которых отсчитывается срок исполнения запроса.
-    	header.CamelSmev3MetadataRecipientMnemonic - Мнемоника получателя. Для машинной обработки. Вычисляется на основании данных сетрификата.
-    	header.CamelSmev3MetadataRecipientHumanReadableName - Наименование получателя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
-    	header.CamelSmev3MetadataDeliveryTimestamp - Дата и время доставки сообщения, по часам СМЭВ.
-    	header.CamelSmev3MetadataStatus - Статус сообщения.
-    	header.CamelSmev3MessageReplyTo - Аналог обратного адреса; непрозрачный объект, по которому СМЭВ сможет вычислить, кому доставить ответ на этот запрос. При отправке ответа нужно скопировать это значение в //SenderProvidedResponseData/To/text(). N.B. Формат обратного адреса не специфицирован, и может меняться со временем. Больше того, в запросах, пришедших от одного и того же отправителя через сколь угодно малый промежуток времени, обратный адрес не обязан быть одним и тем же. Если получатель хочет идентифицировать отправителя, можно использовать сертификат отправителя (//GetMessageIfAnyResponse/CallerInformationSystemSignature/xmldsig:Signature/...)
-    	header.CamelSmev3MessageStatusCode - Код статуса.
-    	header.CamelSmev3MessageRejectionReasonCode - Код причины отклонения запроса.
-    	header.CamelSmev3MessageDescription - Причина отклонения запроса, в человекочитаемом виде.
-    	header.CamelSmev3MessageAccepted - Признак необходимости произвести подтверждение операции чтения. Если присутствует в сообщении, то подтверждение отправляется в СМЭВ автоматически. Значение \"acceped\" берется из этого поля. Может быть true или false.
-    	header.CamelSmev3ContentNamespaceURI - Наименование пространства имен бизнес сообщения.
-    	header.CamelSmev3ContentRootElementLocalName - Наименование корневого тега бизнес сообщения без префикса пространства имен.
-    	header.CamelSmev3ContentPersonalSignature - ЭП отправителя сообщения
-    	header.CamelSmev3MetadataExceptionCause - Причина ошибки
-    	header.CamelSmev3MetadataExceptionStackTrace - Стэк трейс ошибки на стороне СМЭВ
-    	header.CamelSmev3MetadataExceptionMessage - Сообщение об ошибке
-    	header.CamelSmev3MetadataExceptionLocalizedMessage - Локализованное сообщение об ошибке
-    	header.CamelSmev3MetadataExceptionCode - Код ошибки
-    	header.CamelSmev3MetadataExceptionDump - Exception dump
+	header.CamelSmev3MessageId - Идентификатор, присвоенный сообщению отправителем. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
+	header.CamelSmev3MessageOriginalId - Идентификатор исходного Request сообщения для которого отправляется Response. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).
+	header.CamelSmev3MessageReferenceId - Идентификатор сообщения, порождающего цепочку сообщений. При отправке подчиненных сообщений значение соответствует MessageID корневого сообщения цепочки сообщений. Для корневого сообщения значение совпадает с MessageID.
+	header.CamelSmev3MetadataTransactionCode - Идентификатор кода транзакции.
+	header.CamelSmev3MetadataNodeId - Идентификатор ноды отправителя.
+	header.CamelSmev3MetadataTestMessage - Если этот элемент присутствует, то запрос - тестовый. В этом случае, ИС-поставщик данных должна гарантировать, что её данные не будут изменены в результате выполнения этого запроса.
+	header.CamelSmev3MetadataTransportId - Наименование транспорта
+	header.CamelSmev3MetadataMessageType - Тип сообщения
+	header.CamelSmev3MetadataSenderMnemonic - Мнемоника отправителя. Для машинной обработки. Вычисляется на основании данных сетрификата.
+	header.CamelSmev3MetadataSenderHumanReadableName - Наименование отправителя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
+	header.CamelSmev3MetadataSendingTimestamp - Дата и время отправки сообщения в СМЭВ, начиная с которых отсчитывается срок исполнения запроса.
+	header.CamelSmev3MetadataRecipientMnemonic - Мнемоника получателя. Для машинной обработки. Вычисляется на основании данных сетрификата.
+	header.CamelSmev3MetadataRecipientHumanReadableName - Наименование получателя в форме, удобной для восприятия человеком. Вычисляется на основании данных сертификата. Не обязано полностью совпадать с официальным названием организации или органа власти.
+	header.CamelSmev3MetadataDeliveryTimestamp - Дата и время доставки сообщения, по часам СМЭВ.
+	header.CamelSmev3MetadataStatus - Статус сообщения.
+	header.CamelSmev3MessageReplyTo - Аналог обратного адреса; непрозрачный объект, по которому СМЭВ сможет вычислить, кому доставить ответ на этот запрос. При отправке ответа нужно скопировать это значение в //SenderProvidedResponseData/To/text(). N.B. Формат обратного адреса не специфицирован, и может меняться со временем. Больше того, в запросах, пришедших от одного и того же отправителя через сколь угодно малый промежуток времени, обратный адрес не обязан быть одним и тем же. Если получатель хочет идентифицировать отправителя, можно использовать сертификат отправителя (//GetMessageIfAnyResponse/CallerInformationSystemSignature/xmldsig:Signature/...)
+	header.CamelSmev3MessageStatusCode - Код статуса.
+	header.CamelSmev3MessageRejectionReasonCode - Код причины отклонения запроса.
+	header.CamelSmev3MessageDescription - Причина отклонения запроса, в человекочитаемом виде.
+	header.CamelSmev3MessageAccepted - Признак необходимости произвести подтверждение операции чтения. Если присутствует в сообщении, то подтверждение отправляется в СМЭВ автоматически. Значение \"acceped\" берется из этого поля. Может быть true или false.
+	header.CamelSmev3ContentNamespaceURI - Наименование пространства имен бизнес сообщения.
+	header.CamelSmev3ContentRootElementLocalName - Наименование корневого тега бизнес сообщения без префикса пространства имен.
+	header.CamelSmev3ContentPersonalSignature - ЭП отправителя сообщения
+	header.CamelSmev3MetadataExceptionCause - Причина ошибки
+	header.CamelSmev3MetadataExceptionStackTrace - Стэк трейс ошибки на стороне СМЭВ
+	header.CamelSmev3MetadataExceptionMessage - Сообщение об ошибке
+	header.CamelSmev3MetadataExceptionLocalizedMessage - Локализованное сообщение об ошибке
+	header.CamelSmev3MetadataExceptionCode - Код ошибки
+	header.CamelSmev3MetadataExceptionDump - Exception dump
 
 ```
 
