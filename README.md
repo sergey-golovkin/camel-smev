@@ -98,14 +98,11 @@ Apache Camel: 3.20
 		AttachmentMimeType
 		AttachmentLength
 
-		Так же, если для передачи вложения используется FileDataSource, то обязательно указать полный путь до файла в заголовке AttachmentContentRef.
-
         AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
         File f = new File("myAttachment.pdf");
         Attachment a = new DefaultAttachment(new DataHandler(new FileDataSource(f)));
         a.setHeader("AttachmentLength", Long.toString(f.length()));
         a.setHeader("AttachmentMimeType", "application/pdf");
-        a.setHeader("AttachmentContentRef", f.getPath());
         a.setHeader("AttachmentName", f.getName());
         attachmentMessage.addAttachmentObject(f.getName(), a);
 
