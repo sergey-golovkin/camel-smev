@@ -37,7 +37,7 @@ public class FileAttachmentsStrategy implements AttachmentsStrategy
     @Override
     public boolean process(Exchange exchange, Attachment attachment, DataHandler dataHandler) throws Exception
     {
-        Smev3Constants.set(attachment, "AttachmentLength", ((FileDataSource)dataHandler.getDataSource()).getFile().length());
+        Smev3Constants.set(attachment, Smev3Constants.SMEV3_ATTACHMENT_LENGTH, ((FileDataSource)dataHandler.getDataSource()).getFile().length());
         return true;
     }
 

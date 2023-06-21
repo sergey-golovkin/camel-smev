@@ -21,7 +21,7 @@ public class InMemoryAttachmentsStrategy implements AttachmentsStrategy
     @Override
     public boolean process(Exchange exchange, Attachment attachment, DataHandler dataHandler) throws Exception
     {
-        Smev3Constants.set(attachment, "AttachmentLength", ((ByteArrayOutputStream)((ByteArrayDataSource)dataHandler.getDataSource()).getOutputStream()).toByteArray().length);
+        Smev3Constants.set(attachment, Smev3Constants.SMEV3_ATTACHMENT_LENGTH, ((ByteArrayOutputStream)((ByteArrayDataSource)dataHandler.getDataSource()).getOutputStream()).toByteArray().length);
         return true;
     }
 
