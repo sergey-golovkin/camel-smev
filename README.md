@@ -10,53 +10,54 @@ Apache Camel: 3.20
 
 Чтение из очереди СМЭВ вида сведений и сохранение их в папку "/smev_input"
 ```xml
-        <!-- Используем стратегию сохранения вложений в папку -->
-	<bean id="fileAttachmentsStrategy" class="org.apache.camel.component.smev3.strategy.FileAttachmentsStrategy"> 
-		<constructor-arg index="0" value="/smev_input"/>
-		<constructor-arg index="1" value="false"/>
-	</bean>	
 
-	<route>
-		<from uri="smev3:request?attachmentsStrategy=#fileAttachmentsStrategy"/> <!-- читаем сообщения из очереди СМЭВ -->
+<!-- Используем стратегию сохранения вложений в папку -->
+<bean id="fileAttachmentsStrategy" class="org.apache.camel.component.smev3.strategy.FileAttachmentsStrategy"> 
+	<constructor-arg index="0" value="/smev_input"/>
+	<constructor-arg index="1" value="false"/>
+</bean>	
 
-		<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_request.xml"/> <!-- сохраняем бизнес содержимое -->
+<route>
+	<from uri="smev3:request?attachmentsStrategy=#fileAttachmentsStrategy"/> <!-- читаем сообщения из очереди СМЭВ -->
 
-		<setBody><simple>${headers}</simple></setBody>
-		<convertBodyTo type="java.lang.String"/>
-		<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_headers.xml"/> <!-- сохраняем содержимое заголовков -->
+	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_request.xml"/> <!-- сохраняем бизнес содержимое -->
 
-	</route>
+	<setBody><simple>${headers}</simple></setBody>
+	<convertBodyTo type="java.lang.String"/>
+	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_headers.xml"/> <!-- сохраняем содержимое заголовков -->
+
+</route>
 ```
 
 Чтение статусов из очереди СМЭВ и сохранение их в папку "/smev_input"
 ```xml
-	<route>
-		<from uri="smev3:status"/> <!-- читаем статусы из очереди СМЭВ -->
+<route>
+	<from uri="smev3:status"/> <!-- читаем статусы из очереди СМЭВ -->
 
-		<setBody><simple>${headers}</simple></setBody>
-		<convertBodyTo type="java.lang.String"/>
-		<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageReferenceId}_status_headers.xml"/> <!-- сохраняем содержимое заголовков -->
+	<setBody><simple>${headers}</simple></setBody>
+	<convertBodyTo type="java.lang.String"/>
+	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageReferenceId}_status_headers.xml"/> <!-- сохраняем содержимое заголовков -->
 
-	</route>
+</route>
 ```
 
 Отправка сообщения в очередь СМЭВ
 ```xml
-	<route>
-		<from/> <!-- Чтение откуда то -->
-		<convertBodyTo type="java.lang.String"/>
+<route>
+	<from/> <!-- Чтение откуда то -->
+	<convertBodyTo type="java.lang.String"/>
 	
-		<setHeader name="CamelSmev3MessageOriginalId">....</setHeader> <!-- заполнение обязательных заголовков -->
-		<setHeader name="CamelSmev3MetadataTransportId">....</setHeader>
-		<setHeader name="CamelSmev3MetadataTransactionCode">....</setHeader>
-		<setHeader name="CamelSmev3MessageReplyTo">....</setHeader>
+	<setHeader name="CamelSmev3MessageOriginalId">....</setHeader> <!-- заполнение обязательных заголовков -->
+	<setHeader name="CamelSmev3MetadataTransportId">....</setHeader>
+	<setHeader name="CamelSmev3MetadataTransactionCode">....</setHeader>
+	<setHeader name="CamelSmev3MessageReplyTo">....</setHeader>
     
-		<to uri="smev3:response"/> <!-- отправка в очередь СМЭВ -->
+	<to uri="smev3:response"/> <!-- отправка в очередь СМЭВ -->
 
-		<setBody><simple>${headers}</simple></setBody>
-		<convertBodyTo type="java.lang.String"/>
-		<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_result_headers.xml"/> <!-- сохранение заголовков операции отправки в очередь СМЭВ -->
-	</route>
+	<setBody><simple>${headers}</simple></setBody>
+	<convertBodyTo type="java.lang.String"/>
+	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_result_headers.xml"/> <!-- сохранение заголовков операции отправки в очередь СМЭВ -->
+</route>
 
 ```
 
