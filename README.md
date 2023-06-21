@@ -82,7 +82,19 @@ Apache Camel: 3.20
 		validation-3.1.8.jar
 
 - крипто провайдер Крипто-Про - покупается у соответствующего поставщика.
-- apache camel 3.20
+- Иные зависимости:
+
+		org.apache.camel:camel-attachments:3.20.6
+		org.apache.camel:camel-core:3.20.6
+		com.fasterxml.jackson.core:jackson-databind:2.8.11.6
+		com.fasterxml.uuid:java-uuid-generator:4.1.1
+		com.google.guava:guava:19.0
+		com.sun.xml.ws:jaxws-rt:2.3.6
+		commons-net:commons-net:3.9.0
+		org.apache.santuario:xmlsec:1.4.5
+		org.apache.tika:tika-core:1.28.5
+		org.springframework:spring-context:5.3.27
+		xalan:xalan:2.7.3
 
 Для использования требуется:
 - наличие регистрации в ЛК СМЭВ3, получение ключей и сертификатов в соответсвии с процедурой СМЭВ3.
