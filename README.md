@@ -25,7 +25,6 @@ Apache Camel: 3.20
 	<setBody><simple>${headers}</simple></setBody>
 	<convertBodyTo type="java.lang.String"/>
 	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageId}_headers.xml"/> <!-- сохраняем содержимое заголовков -->
-
 </route>
 ```
 
@@ -37,7 +36,6 @@ Apache Camel: 3.20
 	<setBody><simple>${headers}</simple></setBody>
 	<convertBodyTo type="java.lang.String"/>
 	<to uri="file:_in_out_/in?fileName=${headers.CamelSmev3MessageReferenceId}_status_headers.xml"/> <!-- сохраняем содержимое заголовков -->
-
 </route>
 ```
 
