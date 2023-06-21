@@ -32,7 +32,7 @@ Apache Camel: 3.20
 Чтение статусов из очереди СМЭВ и сохранение их в папку "/smev_input"
 ```xml
 <route>
-	<from uri="smev3:status"/> <!-- читаем статусы из очереди СМЭВ -->
+	<from uri="smev3:status?attachmentsStrategy=#fileAttachmentsStrategy"/> <!-- читаем статусы из очереди СМЭВ -->
 
 	<setBody><simple>${headers}</simple></setBody>
 	<convertBodyTo type="java.lang.String"/>
