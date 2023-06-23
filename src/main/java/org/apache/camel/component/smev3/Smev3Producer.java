@@ -8,8 +8,8 @@ import org.apache.camel.component.smev3.attachments.ApacheFTPTransport;
 import org.apache.camel.support.DefaultProducer;
 import org.apache.xerces.impl.dv.util.Base64;
 import org.w3c.dom.*;
-import ru.voskhod.crypto.XMLTransformHelper;
-import ru.voskhod.crypto.impl.SmevTransformUtil;
+import ru.voskhod.crypto.util.SmevTransformUtil;
+import ru.voskhod.crypto.util.XMLTransformHelper;
 import ru.voskhod.smev.client.api.factory.Factory;
 import ru.voskhod.smev.client.api.services.identification.IdentityService;
 import ru.voskhod.smev.client.api.services.signature.Signer;
@@ -142,8 +142,8 @@ public class Smev3Producer extends DefaultProducer
 
     private void sendAndProcessResult(Exchange exchange, SMEVMetadata smevMetadata, BusinessContent businessContent) throws SMEVException
     {
-        SMEVMetadata result = wsTemplate.send(new SMEVMessage(smevMetadata, businessContent));
-        Smev3Constants.fillExchangeHeaders(exchange, result);
+        SMEVMessage result = wsTemplate.send(new SMEVMessage(smevMetadata, businessContent));
+        Smev3Constants.fillExchangeHeaders(exchange, result.getSMEVMetadata());
     }
 
     private Element getContent(Object body) throws Exception

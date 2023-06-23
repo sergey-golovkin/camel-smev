@@ -5,6 +5,7 @@ import org.apache.camel.component.smev3.strategy.InMemoryAttachmentsStrategy;
 import org.apache.camel.support.DefaultComponent;
 import org.springframework.core.env.Environment;
 import ru.voskhod.smev.client.api.configuration.SMEVVersion;
+import ru.voskhod.smev.client.api.message.configuration.MessageMapperConfigurationImpl;
 import ru.voskhod.smev.client.api.services.identification.configuration.IdentityServiceConfiguration;
 import ru.voskhod.smev.client.api.services.messaging.configuration.MessageGenerationConfiguration;
 import ru.voskhod.smev.client.api.services.signature.configuration.SignerConfiguration;
@@ -89,6 +90,7 @@ class Smev3Configuration
     private WSTemplateConfiguration wsTemplateConfiguration;
     private GeoTemplateConfiguration geoTemplateConfiguration;
     private LargeAttachmentTransportConfiguration largeAttachmentTransportConfiguration;
+    private MessageGenerationConfiguration messageGenerationConfiguration;
 
 
     public Smev3Configuration(DefaultComponent component, String uri, String remaining, Map<String, Object> parameters, Environment environment) throws ClassNotFoundException
@@ -341,7 +343,12 @@ class Smev3Configuration
 
                 public MessageGenerationConfiguration getMessageGenerationConfig()
                 {
-                    return null;
+                    if(messageGenerationConfiguration == null)
+                    {
+                        messageGenerationConfiguration = new MessageMapperConfigurationImpl();
+                        messageGenerationConfiguration.setSmevRejectionExceptionConfiguration(new ArrayList<>());
+                    }
+                    return messageGenerationConfiguration;
                 }
 
                 public LargeAttachmentTransportConfiguration getLargeAttachmentTransportConfig()
@@ -417,7 +424,12 @@ class Smev3Configuration
 
                 public MessageGenerationConfiguration getMessageGenerationConfig()
                 {
-                    return null;
+                    if(messageGenerationConfiguration == null)
+                    {
+                        messageGenerationConfiguration = new MessageMapperConfigurationImpl();
+                        messageGenerationConfiguration.setSmevRejectionExceptionConfiguration(new ArrayList<>());
+                    }
+                    return messageGenerationConfiguration;
                 }
 
                 public LargeAttachmentTransportConfiguration getLargeAttachmentTransportConfig()

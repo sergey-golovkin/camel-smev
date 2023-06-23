@@ -9,7 +9,9 @@ import org.apache.camel.component.smev3.attachments.ApacheFTPTransport;
 import org.apache.camel.spi.PollingConsumerPollStrategy;
 import org.apache.camel.support.ScheduledPollConsumer;
 import org.apache.xerces.impl.dv.util.Base64;
-import ru.voskhod.crypto.XMLTransformHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.voskhod.crypto.util.XMLTransformHelper;
 import ru.voskhod.smev.client.api.factory.Factory;
 import ru.voskhod.smev.client.api.services.signature.Signer;
 import ru.voskhod.smev.client.api.services.template.WSTemplate;
@@ -29,6 +31,7 @@ import java.util.List;
 
 public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsumerPollStrategy
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Smev3Consumer.class);
     private final Smev3Configuration conf;
     private final WSTemplate wsTemplate;
     private final Signer signer;
@@ -207,9 +210,9 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
             if(polledMessages > 0 && accepted != null && conf.getQueryInformation().getType() != ProcessingInformation.Type.STATUS)
                 wsTemplate.ack(message.getSMEVMetadata(), accepted); // true, если ЭП-СМЭВ прошла валидацию и сообщение передано ИС. false, если ЭП-СМЭВ отвергнута, и сообщение проигнорировано.
         }
-        catch (SMEVException e)
+        catch (SMEVException ex)
         {
-            // TODO log
+            LOGGER.error("ack: " + message.getSMEVMetadata().getMessageIdentity().getMessageId(), ex);
         }
         finally
         {
@@ -221,7 +224,8 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
     @Override
     public boolean rollback(Consumer consumer, Endpoint endpoint, int retryCounter, Exception cause) throws Exception
     {
-        // TODO log
+        LOGGER.error("stop procesing! rollback", cause);
+
         Thread.sleep(conf.getErrorDelay());
         message = null;
         return false; // false = no retry

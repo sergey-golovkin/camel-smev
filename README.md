@@ -63,25 +63,27 @@ Apache Camel: 3.20
 ### [Сборка]
 
 Для сборки требуются бибилиотеки:
-- клиент СМЭВ-3 версии 3.1.8 - берется с сайта госуслуг.
+- клиент СМЭВ-3 версии 3.1.8-1 - берется с сайта госуслуг
+Интеграционный узел Адаптера for Win версия 2.6.1 (25.04.2023) https://info.gosuslugi.ru/docs/section/ИУА_СМЭВ_3/
 	
 используются модули:
 
-		api-3.1.8.jar
-		commons-3.1.8.jar
-		crypto-adapter-1.2.jar
-		factory-3.1.8.jar
-		identification-3.1.8.jar
-		message-3.1.8.jar
-		server-api-3.1.8.jar
-		signature-3.1.8.jar
-		template-3.1.8.jar
-		transaction-3.1.8.jar
-		transport-3.1.8.jar
-		util-3.1.8.jar
-		validation-3.1.8.jar
+		api-3.1.8-1.jar
+		common-protocols-2.6.1.jar
+		crypto-adapter-iua-1.3.jar
+		factory-3.1.8-1.jar
+		identification-3.1.8-1.jar
+		message-3.1.8-1.jar
+		server-api-3.1.8-1.jar
+		signature-3.1.8-1.jar
+		svsdss-3.1.8-1.jar
+		template-3.1.8-1.jar
+		transport-3.1.8-1.jar
+		util-3.1.8-1.jar
+		validation-3.1.8-1.jar
 
-- крипто провайдер Крипто-Про - покупается у соответствующего поставщика.
+- крипто провайдер КриптоПро JCP/JCP 2.0 - берется с сайта https://www.cryptopro.ru/products/csp/jcp
+
 - иные зависимости:
 
 		org.apache.camel:camel-attachments:3.20.6
@@ -94,6 +96,8 @@ Apache Camel: 3.20
 		org.apache.santuario:xmlsec:1.4.5
 		org.apache.tika:tika-core:1.28.5
 		org.springframework:spring-context:5.3.27
+		org.apache.commons:commons-collections4:4.4
+		org.apache.commons:commons-pool2:2.11.1
 		xalan:xalan:2.7.3
 
 Для использования требуется:

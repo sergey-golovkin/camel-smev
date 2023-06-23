@@ -6,6 +6,8 @@ import org.apache.camel.spi.Metadata;
 import org.apache.xerces.impl.dv.util.Base64;
 import ru.voskhod.smev.client.api.types.exception.SMEVProcessingException;
 import ru.voskhod.smev.client.api.types.message.system.SMEVMetadata;
+import ru.voskhod.smev.client.api.types.message.system.processing.RequestInformation;
+import ru.voskhod.smev.client.api.types.message.system.processing.ResponseInformation;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -71,6 +73,18 @@ public class Smev3Constants
             {
                 Smev3Constants.set(exchange, Smev3Constants.SMEV3_METADATA_NODEID, smevMetadata.getProcessingInformation().getNodeId());
                 Smev3Constants.set(exchange, Smev3Constants.SMEV3_METADATA_MESSAGETYPE, smevMetadata.getProcessingInformation().getType());
+                if(smevMetadata.getProcessingInformation() instanceof ResponseInformation)
+                {
+                    ResponseInformation responseInformation = (ResponseInformation) smevMetadata.getProcessingInformation();
+                    Smev3Constants.set(exchange, Smev3Constants.SMEV3_ORIGINAL_MESSAGEID, responseInformation.getOriginalMessageId());
+                    Smev3Constants.set(exchange, Smev3Constants.SMEV3_MESSAGE_REPLYTO, responseInformation.getReplyTo());
+                }
+                else if(smevMetadata.getProcessingInformation() instanceof RequestInformation)
+                {
+                    RequestInformation requestInformation = (RequestInformation) smevMetadata.getProcessingInformation();
+                    Smev3Constants.set(exchange, Smev3Constants.SMEV3_METADATA_TESTMESSAGE, requestInformation.isTestMessage());
+                    Smev3Constants.set(exchange, Smev3Constants.SMEV3_METADATA_EOL, requestInformation.getEol());
+                }
             }
             if(smevMetadata.getSmevContext() != null)
             {
@@ -149,6 +163,8 @@ public class Smev3Constants
 // Все данные заполняются СМЭВ. Элемент //MessageMetadata/SendingTimestamp содержит дату и время, начиная с которых
 // отсчитывается срок исполнения запроса. Остальные данные предназначены для целей анализа (машинного и ручного) качества обслуживания
 // информационной системы - получателя сообщения, а также для предоставления службе поддержки оператора СМЭВ в случае необходимости.
+    @Metadata(description = "Время ")
+    public static final String SMEV3_METADATA_EOL = SMEV3_HEADER_PREFIX + "MessageEndOfLife";
     @Metadata(description = "")
     public static final String SMEV3_METADATA_IDTRANSPORT = SMEV3_HEADER_PREFIX + "MetadataTransportId";
     @Metadata(description = "")
