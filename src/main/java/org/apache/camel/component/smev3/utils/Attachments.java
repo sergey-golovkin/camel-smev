@@ -1,4 +1,4 @@
-package org.apache.camel.component.smev3.attachments;
+package org.apache.camel.component.smev3.utils;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.attachment.Attachment;
@@ -16,11 +16,11 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public class AttachmentsUtils
+public class Attachments
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AttachmentsUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Attachments.class);
 
-    public static void sendFile(String filePath, String mimeType, Exchange exchange)
+    public static void sendFile(String filePath, String mimeType, String attachmentId, Exchange exchange)
     {
         LOGGER.debug("sendFile filePath: \"{}\"", filePath);
         AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
@@ -31,6 +31,9 @@ public class AttachmentsUtils
             attachment.setHeader(Smev3Constants.SMEV3_ATTACHMENT_LENGTH, Long.toString(file.length()));
             attachment.setHeader(Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, mimeType);
             attachment.setHeader(Smev3Constants.SMEV3_ATTACHMENT_NAME, file.getName());
+            if(attachmentId != null && attachmentId.length() > 0)
+                attachment.setHeader(Smev3Constants.SMEV3_ATTACHMENT_UUID, attachmentId);
+
             attachmentMessage.addAttachmentObject(file.getName(), attachment);
         }
     }

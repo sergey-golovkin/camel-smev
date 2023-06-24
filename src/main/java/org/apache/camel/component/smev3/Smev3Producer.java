@@ -4,7 +4,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.FailedToCreateConsumerException;
 import org.apache.camel.attachment.Attachment;
 import org.apache.camel.attachment.AttachmentMessage;
-import org.apache.camel.component.smev3.attachments.ApacheFTPTransport;
+import org.apache.camel.component.smev3.utils.ApacheFTPTransport;
 import org.apache.camel.support.DefaultProducer;
 import org.apache.xerces.impl.dv.util.Base64;
 import org.w3c.dom.*;

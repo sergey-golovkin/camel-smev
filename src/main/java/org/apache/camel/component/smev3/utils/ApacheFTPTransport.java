@@ -1,4 +1,4 @@
-package org.apache.camel.component.smev3.attachments;
+package org.apache.camel.component.smev3.utils;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
