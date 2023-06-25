@@ -8,7 +8,9 @@ import ru.voskhod.smev.client.api.types.exception.SMEVProcessingException;
 import ru.voskhod.smev.client.api.types.message.system.SMEVMetadata;
 import ru.voskhod.smev.client.api.types.message.system.processing.RequestInformation;
 import ru.voskhod.smev.client.api.types.message.system.processing.ResponseInformation;
-
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -49,8 +51,15 @@ public class Smev3Constants
             return (T) (value == null ? defaultValue : UUID.fromString(value));
         if(type.equals(URI.class))
             return (T) (value == null ? defaultValue : Paths.get(value).toUri());
+        if(type.equals(XMLGregorianCalendar.class))
+        {
+            if(value == null)
+                return defaultValue;
 
-        throw new ArithmeticException("type");
+            try { return (T) DatatypeFactory.newInstance().newXMLGregorianCalendar(value); }
+            catch(DatatypeConfigurationException ex) { return defaultValue; }
+        }
+        throw new IllegalArgumentException("type");
     }
 
     public static void set(Attachment attachment, String name, Object value)
@@ -163,7 +172,7 @@ public class Smev3Constants
 // Все данные заполняются СМЭВ. Элемент //MessageMetadata/SendingTimestamp содержит дату и время, начиная с которых
 // отсчитывается срок исполнения запроса. Остальные данные предназначены для целей анализа (машинного и ручного) качества обслуживания
 // информационной системы - получателя сообщения, а также для предоставления службе поддержки оператора СМЭВ в случае необходимости.
-    @Metadata(description = "Время ")
+    @Metadata(description = "Дата и Время, после которого обработка теряет бизнес смысл.")
     public static final String SMEV3_METADATA_EOL = SMEV3_HEADER_PREFIX + "MessageEndOfLife";
     @Metadata(description = "")
     public static final String SMEV3_METADATA_IDTRANSPORT = SMEV3_HEADER_PREFIX + "MetadataTransportId";

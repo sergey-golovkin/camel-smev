@@ -86,7 +86,6 @@ public class Smev3Producer extends DefaultProducer
         String transactionCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TRANSACTION_CODE, String.class);
         String replyTo = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_REPLYTO, String.class);
 
-        XMLGregorianCalendar eol = null; // TODO
         List<Element> businessProcessMetadata = Collections.emptyList();
         Map<String, List<SMEVAttachment>> registryAttachments = Collections.emptyMap();
         Map<String, String> parameters = Collections.emptyMap();
@@ -95,6 +94,7 @@ public class Smev3Producer extends DefaultProducer
 
         if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Request))
         {
+            XMLGregorianCalendar eol = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_EOL, null, XMLGregorianCalendar.class);
             Boolean testMessage = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TESTMESSAGE, false, Boolean.class);
             String nodeId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_NODEID, String.class);
             Element content = getContent(exchange.getMessage().getBody());
