@@ -216,7 +216,7 @@ public class Smev3Producer extends DefaultProducer
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class),
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, signature, byte[].class),
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, null, String.class),
-                                attachmentName,
+                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_UUID, attachmentName, String.class),
                                 dataHandler
                         );
                     }
