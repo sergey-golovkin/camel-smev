@@ -28,7 +28,7 @@ public class FileAttachmentsStrategy implements AttachmentsStrategy
     }
 
     @Override
-    public DataHandler get(Exchange exchange, String messageId, String attachmentId, String attachmentName, String mimeType, byte[] signaturePKCS7) throws Exception
+    public DataHandler get(Exchange exchange, String messageId, String attachmentId, String attachmentName, String mimeType, byte[] signaturePKCS7, int current, int total) throws Exception
     {
         FileUtils.forceMkdir(new File(Paths.get(attachmentsStore, messageId).toUri()));
         return new DataHandler(new FileDataSource(new File(Paths.get(attachmentsStore, messageId, attachmentName).toUri())));

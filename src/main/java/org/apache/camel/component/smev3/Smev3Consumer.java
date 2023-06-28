@@ -108,8 +108,19 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
 
             Smev3Constants.fillExchangeHeaders(exchange, message.getSMEVMetadata());
             fillExchangeAttachments(exchange, message);
-            Smev3Constants.set(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true);
+
+            if(conf.isAutoAck())
+                Smev3Constants.set(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true);
+
             this.getProcessor().process(exchange);
+            if(exchange.isFailed())
+            {
+                if(exchange.getException() != null)
+                    throw CamelExecutionException.wrapCamelExecutionException(exchange, exchange.getException());
+                else
+                    throw new CamelExecutionException("Exception occurred during execution", exchange);
+            }
+
             accepted = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, Boolean.class);
             return 1; // polled messages
         }
@@ -128,6 +139,8 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
             AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
             AttachmentsStrategy attachmentsStrategy = conf.getAttachmentsStrategy();
 
+            int current = 0;
+            int total = message.getData().getAttachments().size();
             for(SMEVAttachment attachment : message.getData().getAttachments())
             {
                 if(attachment instanceof MTOMAttachment)
@@ -140,7 +153,9 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             mtomAttachment.getAttachmentId(),
                             mtomAttachment.getAttachmentId(),
                             mtomAttachment.getMimeType(),
-                            mtomAttachment.getSignaturePKCS7()
+                            mtomAttachment.getSignaturePKCS7(),
+                            current++,
+                            total
                     );
                     attachments.add(dataHandler);
 
@@ -170,8 +185,10 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             largeAttachment.getUuid().toString(),
                             largeAttachment.getFileRef(),
                             largeAttachment.getMimeType(),
-                            largeAttachment.getSignaturePKCS7()
-                            );
+                            largeAttachment.getSignaturePKCS7(),
+                            current++,
+                            total
+                    );
                     attachments.add(dataHandler);
 
                     try(OutputStream outputStream = dataHandler.getOutputStream())

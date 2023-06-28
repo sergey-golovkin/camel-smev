@@ -19,8 +19,7 @@ public class Smev3Endpoint extends ScheduledPollEndpoint
     public Consumer createConsumer(Processor processor) throws Exception
     {
         Smev3Consumer consumer = new Smev3Consumer(this, processor, conf);
-        if(conf.isAutoAck())
-            setPollStrategy(consumer);
+        setPollStrategy(consumer);
         configureConsumer(consumer);
         return consumer;
     }

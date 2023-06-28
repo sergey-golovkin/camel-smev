@@ -13,7 +13,7 @@ public class InMemoryAttachmentsStrategy implements AttachmentsStrategy
     }
 
     @Override
-    public DataHandler get(Exchange exchange, String messageId, String attachmentId, String attachmentName, String mimeType, byte[] signaturePKCS7) throws Exception
+    public DataHandler get(Exchange exchange, String messageId, String attachmentId, String attachmentName, String mimeType, byte[] signaturePKCS7, int current, int total) throws Exception
     {
         return new DataHandler(new ByteArrayDataSource(attachmentName, mimeType));
     }
