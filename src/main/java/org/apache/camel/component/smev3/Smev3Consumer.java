@@ -157,23 +157,25 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             current++,
                             total
                     );
-                    attachments.add(dataHandler);
-
-                    try(OutputStream outputStream = dataHandler.getOutputStream();
-                        InputStream inputStream = mtomAttachment.getContent().getInputStream())
+                    if(dataHandler != null)
                     {
-                        inputStream.transferTo(outputStream);
+                        attachments.add(dataHandler);
+
+                        try (OutputStream outputStream = dataHandler.getOutputStream(); InputStream inputStream = mtomAttachment.getContent().getInputStream())
+                        {
+                            inputStream.transferTo(outputStream);
+                        }
+
+                        Attachment a = new DefaultAttachment(dataHandler);
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_UUID, mtomAttachment.getAttachmentId());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_NAME, mtomAttachment.getAttachmentId());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
+
+                        if (attachmentsStrategy.process(exchange, a, dataHandler))
+                            attachmentMessage.addAttachmentObject(mtomAttachment.getAttachmentId(), a);
                     }
-
-                    Attachment a = new DefaultAttachment(dataHandler);
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_UUID, mtomAttachment.getAttachmentId());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_NAME, mtomAttachment.getAttachmentId());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
-
-                    if(attachmentsStrategy.process(exchange, a, dataHandler))
-                        attachmentMessage.addAttachmentObject(mtomAttachment.getAttachmentId(), a);
                 }
                 else if(attachment instanceof LargeAttachment)
                 {
@@ -189,23 +191,26 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                             current++,
                             total
                     );
-                    attachments.add(dataHandler);
-
-                    try(OutputStream outputStream = dataHandler.getOutputStream())
+                    if(dataHandler != null)
                     {
-                        laTransport.download(largeAttachment, outputStream);
+                        attachments.add(dataHandler);
+
+                        try (OutputStream outputStream = dataHandler.getOutputStream())
+                        {
+                            laTransport.download(largeAttachment, outputStream);
+                        }
+
+                        Attachment a = new DefaultAttachment(dataHandler);
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_UUID, largeAttachment.getUuid().toString());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_NAME, largeAttachment.getFileRef());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
+                        Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_HASH, largeAttachment.getHash());
+
+                        if (attachmentsStrategy.process(exchange, a, dataHandler))
+                            attachmentMessage.addAttachmentObject(largeAttachment.getUuid().toString(), a);
                     }
-
-                    Attachment a = new DefaultAttachment(dataHandler);
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, attachment.getMimeType());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_UUID, largeAttachment.getUuid().toString());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_NAME, largeAttachment.getFileRef());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
-                    Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_HASH, largeAttachment.getHash());
-
-                    if(attachmentsStrategy.process(exchange, a, dataHandler))
-                        attachmentMessage.addAttachmentObject(largeAttachment.getUuid().toString(), a);
                 }
                 else
                     throw new Exception("Unexpected attachment type"); // TODO log
