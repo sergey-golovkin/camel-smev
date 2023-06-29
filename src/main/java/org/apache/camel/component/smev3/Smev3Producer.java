@@ -80,69 +80,83 @@ public class Smev3Producer extends DefaultProducer
     @Override
     public void process(final Exchange exchange) throws Exception
     {
-        String messageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ID, identityService.generateUUID(), String.class);
-        String referenceMessageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_REFERENCE_ID, String.class);
-        String originalMessageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_ORIGINAL_MESSAGEID, String.class);
-        String transactionCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TRANSACTION_CODE, String.class);
-        String replyTo = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_REPLYTO, String.class);
+        if(conf.getBodyType().equals(Smev3Configuration.Smev3BodyType.Content))
+        {
+            String messageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ID, identityService.generateUUID(), String.class);
+            String referenceMessageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_REFERENCE_ID, String.class);
+            String originalMessageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_ORIGINAL_MESSAGEID, String.class);
+            String transactionCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TRANSACTION_CODE, String.class);
+            String replyTo = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_REPLYTO, String.class);
 
-        List<Element> businessProcessMetadata = Collections.emptyList();
-        Map<String, List<SMEVAttachment>> registryAttachments = Collections.emptyMap();
-        Map<String, String> parameters = Collections.emptyMap();
+            List<Element> businessProcessMetadata = Collections.emptyList();
+            Map<String, List<SMEVAttachment>> registryAttachments = Collections.emptyMap();
+            Map<String, String> parameters = Collections.emptyMap();
 
-        SMEVMetadata.MessageIdentity messageIdentity = new SMEVMetadata.MessageIdentity(messageId, referenceMessageId, transactionCode);
+            SMEVMetadata.MessageIdentity messageIdentity = new SMEVMetadata.MessageIdentity(messageId, referenceMessageId, transactionCode);
 
-        if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Request))
-        {
-            XMLGregorianCalendar eol = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_EOL, null, XMLGregorianCalendar.class);
-            Boolean testMessage = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TESTMESSAGE, false, Boolean.class);
-            String nodeId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_NODEID, String.class);
-            Element content = getContent(exchange.getMessage().getBody());
-            SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new RequestInformation(messageId, eol, nodeId, testMessage));
-            RequestContent businessContent = new RequestContent(content, signer.sign(content), getAttachments(exchange), businessProcessMetadata, registryAttachments);
-            sendAndProcessResult(exchange, smevMetadata, businessContent);
-        }
-        else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Response))
-        {
-            Element content = getContent(exchange.getMessage().getBody());
-            SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
-            ResponseContent businessContent = new ResponseContent(content, signer.sign(content), getAttachments(exchange), businessProcessMetadata);
-            sendAndProcessResult(exchange, smevMetadata, businessContent);
-        }
-        else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Status))
-        {
-            Integer statusCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_STATUS_CODE, Integer.class);
-            String description = Smev3Constants.get(exchange, Smev3Constants.SMEV3_DESCRIPTION, String.class);
-            SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
-            StatusResponseContent businessContent = new StatusResponseContent(statusCode, description, parameters, businessProcessMetadata);
-            sendAndProcessResult(exchange, smevMetadata, businessContent);
-        }
-        else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Reject))
-        {
-            String rejectionReasonCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_REJECTION_REASON_CODE, String.class);
-            String description = Smev3Constants.get(exchange, Smev3Constants.SMEV3_DESCRIPTION, String.class);
-            SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
-            RejectResponseContent businessContent = new RejectResponseContent(businessProcessMetadata);
-            businessContent.add(RejectResponseContent.RejectCode.fromValue(rejectionReasonCode), description);
-            sendAndProcessResult(exchange, smevMetadata, businessContent);
-        }
-        else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Ack))
-        {
-            String idTransport = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_IDTRANSPORT, String.class);
+            if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Request))
+            {
+                XMLGregorianCalendar eol = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_EOL, null, XMLGregorianCalendar.class);
+                Boolean testMessage = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_TESTMESSAGE, false, Boolean.class);
+                String nodeId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_NODEID, String.class);
+                Element content = getContent(exchange.getMessage().getBody());
+                SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new RequestInformation(messageId, eol, nodeId, testMessage));
+                RequestContent businessContent = new RequestContent(content, signer.sign(content), getAttachments(exchange), businessProcessMetadata, registryAttachments);
+                sendAndProcessResult(exchange, new SMEVMessage(smevMetadata, businessContent));
+            }
+            else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Response))
+            {
+                Element content = getContent(exchange.getMessage().getBody());
+                SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
+                ResponseContent businessContent = new ResponseContent(content, signer.sign(content), getAttachments(exchange), businessProcessMetadata);
+                sendAndProcessResult(exchange, new SMEVMessage(smevMetadata, businessContent));
+            }
+            else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Status))
+            {
+                Integer statusCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_STATUS_CODE, Integer.class);
+                String description = Smev3Constants.get(exchange, Smev3Constants.SMEV3_DESCRIPTION, String.class);
+                SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
+                StatusResponseContent businessContent = new StatusResponseContent(statusCode, description, parameters, businessProcessMetadata);
+                sendAndProcessResult(exchange, new SMEVMessage(smevMetadata, businessContent));
+            }
+            else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Reject))
+            {
+                String rejectionReasonCode = Smev3Constants.get(exchange, Smev3Constants.SMEV3_REJECTION_REASON_CODE, String.class);
+                String description = Smev3Constants.get(exchange, Smev3Constants.SMEV3_DESCRIPTION, String.class);
+                SMEVMetadata smevMetadata = new SMEVMetadata(messageIdentity, new ResponseInformation(messageId, originalMessageId, replyTo));
+                RejectResponseContent businessContent = new RejectResponseContent(businessProcessMetadata);
+                businessContent.add(RejectResponseContent.RejectCode.fromValue(rejectionReasonCode), description);
+                sendAndProcessResult(exchange, new SMEVMessage(smevMetadata, businessContent));
+            }
+            else if (conf.getMode().equals(Smev3Configuration.Smev3Mode.Ack))
+            {
+                String idTransport = Smev3Constants.get(exchange, Smev3Constants.SMEV3_METADATA_IDTRANSPORT, String.class);
 
-            Boolean accepted = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true, Boolean.class);
-            SMEVMetadata smevMetadata = new SMEVMetadata(new SMEVMetadata.MessageIdentity(messageId, referenceMessageId, transactionCode), null);
-            SMEVContext smevContext = new SMEVContext(idTransport, null);
-            smevMetadata.setSmevContext(smevContext);
-            wsTemplate.ack(smevMetadata, accepted); // true, если ЭП-СМЭВ прошла валидацию и сообщение передано ИС. false, если ЭП-СМЭВ отвергнута, и сообщение проигнорировано.
+                Boolean accepted = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true, Boolean.class);
+                SMEVMetadata smevMetadata = new SMEVMetadata(new SMEVMetadata.MessageIdentity(messageId, referenceMessageId, transactionCode), null);
+                SMEVContext smevContext = new SMEVContext(idTransport, null);
+                smevMetadata.setSmevContext(smevContext);
+                wsTemplate.ack(smevMetadata, accepted); // true, если ЭП-СМЭВ прошла валидацию и сообщение передано ИС. false, если ЭП-СМЭВ отвергнута, и сообщение проигнорировано.
+            }
+            else
+                throw new Exception("Unexpected mode"); // TODO log
+        }
+        else if(conf.getBodyType().equals(Smev3Configuration.Smev3BodyType.SMEVMessage))
+        {
+            SMEVMessage message = exchange.getMessage().getBody(SMEVMessage.class);
+
+            if(message.getData().getAttachments() != null)
+                message.getData().getAttachments().addAll(getAttachments(exchange));
+
+            sendAndProcessResult(exchange, message);
         }
         else
-            throw new Exception(); // TODO log
+            throw new Exception("Unexpected body type"); // TODO log
     }
 
-    private void sendAndProcessResult(Exchange exchange, SMEVMetadata smevMetadata, BusinessContent businessContent) throws SMEVException
+    private void sendAndProcessResult(Exchange exchange, SMEVMessage message) throws SMEVException
     {
-        SMEVMessage result = wsTemplate.send(new SMEVMessage(smevMetadata, businessContent));
+        SMEVMessage result = wsTemplate.send(message);
         Smev3Constants.fillExchangeHeaders(exchange, result.getSMEVMetadata());
     }
 
@@ -186,8 +200,8 @@ public class Smev3Producer extends DefaultProducer
                     DigestInputStream digestInputStream = signer.getDigestInputStream(inputStream))
                 {
                     SMEVAttachment smevAttachment;
-                    byte[] checkSum = signer.getDigest(digestInputStream);
-                    byte[] signature = signer.signPKCS7Detached(checkSum);
+                    byte[] checkSum = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_HASH, signer.getDigest(digestInputStream), byte[].class);
+                    byte[] signature = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, signer.signPKCS7Detached(checkSum), byte[].class);
 
                     if (length >= conf.getLargeAttachmentThreshold())
                     {
@@ -195,7 +209,7 @@ public class Smev3Producer extends DefaultProducer
 
                         smevAttachment = new LargeAttachment(
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class),
-                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, signature, byte[].class),
+                                signature,
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, null, String.class),
                                 attachmentUUId,
                                 null, // Must be null
