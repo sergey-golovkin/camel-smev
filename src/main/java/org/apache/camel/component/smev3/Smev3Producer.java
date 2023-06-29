@@ -228,7 +228,7 @@ public class Smev3Producer extends DefaultProducer
                     {
                         smevAttachment = new MTOMAttachment(
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class),
-                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, signature, byte[].class),
+                                signature,
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, null, String.class),
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_UUID, attachmentName, String.class),
                                 dataHandler
