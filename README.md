@@ -204,11 +204,4 @@ smev3.transport.1.3.main.url = http://smev3-n0.test.gosuslugi.ru:5000/transport_
 
 smev3.large.attachment.transport.address = smev3-n0.test.gosuslugi.ru
 
-smev3.large.attachment.transport.login = anonymous
-
-smev3.large.attachment.transport.password = smev
-
-smev3.large.attachment.threshold = 1048576
-
-
 Подробнее в Smev3Configuration.java
