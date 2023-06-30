@@ -66,7 +66,7 @@ Apache Camel: 3.20
 - клиент СМЭВ-3 версии 3.1.8-1 - берется с сайта госуслуг
 Интеграционный узел Адаптера for Win версия 2.6.1 (25.04.2023) https://info.gosuslugi.ru/docs/section/ИУА_СМЭВ_3/
 	
-используются модули:
+используются модули, положить в папку "ext_smev":
 
 		api-3.1.8-1.jar
 		common-protocols-2.6.1.jar
@@ -82,23 +82,8 @@ Apache Camel: 3.20
 		util-3.1.8-1.jar
 		validation-3.1.8-1.jar
 
-- крипто провайдер КриптоПро JCP/JCP 2.0 - берется с сайта https://www.cryptopro.ru/products/csp/jcp
+- крипто провайдер КриптоПро JCP/JCP 2.0 - берется с сайта https://www.cryptopro.ru/products/csp/jcp, положить в папку "ext_cpjcp"
 
-- иные зависимости:
-
-		org.apache.camel:camel-attachments:3.20.6
-		org.apache.camel:camel-core:3.20.6
-		com.fasterxml.jackson.core:jackson-databind:2.8.11.6
-		com.fasterxml.uuid:java-uuid-generator:4.1.1
-		com.google.guava:guava:19.0
-		com.sun.xml.ws:jaxws-rt:2.3.6
-		commons-net:commons-net:3.9.0
-		org.apache.santuario:xmlsec:1.4.5
-		org.apache.tika:tika-core:1.28.5
-		org.springframework:spring-context:5.3.27
-		org.apache.commons:commons-collections4:4.4
-		org.apache.commons:commons-pool2:2.11.1
-		xalan:xalan:2.7.3
 
 Для использования требуется:
 - наличие регистрации в ЛК СМЭВ-3, получение ключей и сертификатов в соответсвии с процедурой СМЭВ-3.

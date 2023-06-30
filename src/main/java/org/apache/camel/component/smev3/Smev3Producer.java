@@ -7,6 +7,7 @@ import org.apache.camel.attachment.AttachmentMessage;
 import org.apache.camel.component.smev3.utils.ApacheFTPTransport;
 import org.apache.camel.support.DefaultProducer;
 import org.apache.xerces.impl.dv.util.Base64;
+import org.apache.xml.utils.XMLChar;
 import org.w3c.dom.*;
 import ru.voskhod.crypto.util.SmevTransformUtil;
 import ru.voskhod.crypto.util.XMLTransformHelper;
@@ -22,7 +23,6 @@ import ru.voskhod.smev.client.api.types.message.SMEVMessage;
 import ru.voskhod.smev.client.api.types.message.attachment.LargeAttachment;
 import ru.voskhod.smev.client.api.types.message.attachment.MTOMAttachment;
 import ru.voskhod.smev.client.api.types.message.attachment.SMEVAttachment;
-import ru.voskhod.smev.client.api.types.message.business.data.BusinessContent;
 import ru.voskhod.smev.client.api.types.message.business.data.request.RequestContent;
 import ru.voskhod.smev.client.api.types.message.business.data.response.RejectResponseContent;
 import ru.voskhod.smev.client.api.types.message.business.data.response.ResponseContent;
@@ -200,15 +200,18 @@ public class Smev3Producer extends DefaultProducer
                     DigestInputStream digestInputStream = signer.getDigestInputStream(inputStream))
                 {
                     SMEVAttachment smevAttachment;
+                    String mimeType = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class);
                     byte[] checkSum = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_HASH, signer.getDigest(digestInputStream), byte[].class);
                     byte[] signature = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, signer.signPKCS7Detached(checkSum), byte[].class);
+                    String attachmentId = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_UUID, attachmentName, String.class);
 
-                    if (length >= conf.getLargeAttachmentThreshold())
+                    if (length >= conf.getLargeAttachmentThreshold() || // Если вложение слишком большое
+                        XMLChar.isValidNCName(attachmentId) == false) // Обработка "фичи" СМЭВ3, что имя или идентификатор вложения для MTOM должен быть NCName
                     {
                         UUID attachmentUUId = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_UUID, identityService.generateAttachmentUUID(), UUID.class);
 
                         smevAttachment = new LargeAttachment(
-                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class),
+                                mimeType,
                                 signature,
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, null, String.class),
                                 attachmentUUId,
@@ -227,10 +230,10 @@ public class Smev3Producer extends DefaultProducer
                     else
                     {
                         smevAttachment = new MTOMAttachment(
-                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_MIMETYPE, "application/stream", String.class),
+                                mimeType,
                                 signature,
                                 Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, null, String.class),
-                                Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_UUID, attachmentName, String.class),
+                                attachmentId,
                                 dataHandler
                         );
                     }

@@ -44,8 +44,10 @@ class Smev3Configuration
 
     private static final int DEFAULT_ERROR_DELAY = 60000;
     private static final int DEFAULT_TIMEOUT_MILLIS = 1000;
-    private static final int DEFAULT_RETRIES_COUNT = 1;
-    private static final int DEFAULT_LARGE_ATTACHMENT_THRESHOLD = 5 * 1024 * 1024;
+    private static final int DEFAULT_RETRIES_COUNT = 5;
+    private static final int DEFAULT_LARGE_ATTACHMENT_THRESHOLD = 512 * 1024;
+    private static final String DEFAULT_FTP_LOGIN = "anonymous";
+    private static final String DEFAULT_FTP_PASSWORD = "smev";
 
     private QueryInformation queryInformation;
     private Smev3Mode mode;
@@ -141,8 +143,8 @@ class Smev3Configuration
         omitXMLDeclaration = component.getAndRemoveParameter(parameters, "omitXMLDeclaration", Boolean.class, true);
 
         ftpAddress = environment.getProperty("smev3.large.attachment.transport.address");
-        ftpLogin = environment.getProperty("smev3.large.attachment.transport.login");
-        ftpPassword = environment.getProperty("smev3.large.attachment.transport.password");
+        ftpLogin = environment.getProperty("smev3.large.attachment.transport.login", String.class, DEFAULT_FTP_LOGIN);
+        ftpPassword = environment.getProperty("smev3.large.attachment.transport.password", String.class, DEFAULT_FTP_PASSWORD);
         ftpMaxAttempts = environment.getProperty("smev3.large.attachment.transport.retries", Integer.class, DEFAULT_RETRIES_COUNT);
         ftpTimeout = environment.getProperty("smev3.large.attachment.transport.timeout", Integer.class, DEFAULT_TIMEOUT_MILLIS);
         largeAttachmentThreshold = environment.getProperty("smev3.large.attachment.threshold", Integer.class, DEFAULT_LARGE_ATTACHMENT_THRESHOLD);

@@ -23,6 +23,8 @@ public class Smev3Constants
     {
         if(value != null)
             exchange.getMessage().setHeader(name, value);
+        else
+            exchange.getMessage().removeHeader(name);
     }
 
     public static <T> T get(Exchange exchange, String name, Class<T> type)
@@ -39,19 +41,19 @@ public class Smev3Constants
     {
         String value = attachment.getHeader(name);
 
-        if(type.equals(String.class))
+        if(String.class.equals(type))
             return (T) (value == null ? defaultValue : value);
-        if(type.equals(Integer.class))
+        if(Integer.class.equals(type))
             return (T) (value == null ? defaultValue : (Integer) Integer.parseInt(value));
-        if(type.equals(Long.class))
+        if(Long.class.equals(type))
             return (T) (value == null ? defaultValue : (Long) Long.parseLong(value));
-        if(type.equals(byte[].class))
+        if(byte[].class.equals(type))
             return (T) (value == null ? defaultValue : Base64.decode(value));
-        if(type.equals(UUID.class))
+        if(UUID.class.equals(type))
             return (T) (value == null ? defaultValue : UUID.fromString(value));
-        if(type.equals(URI.class))
+        if(URI.class.equals(type))
             return (T) (value == null ? defaultValue : Paths.get(value).toUri());
-        if(type.equals(XMLGregorianCalendar.class))
+        if(XMLGregorianCalendar.class.equals(type))
         {
             if(value == null)
                 return defaultValue;
@@ -66,6 +68,8 @@ public class Smev3Constants
     {
         if(value != null)
             attachment.setHeader(name, value.toString());
+        else
+            attachment.removeHeader(name);
     }
 
     public static void fillExchangeHeaders(Exchange exchange, SMEVMetadata smevMetadata)
