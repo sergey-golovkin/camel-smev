@@ -134,7 +134,7 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
 
     private void fillExchangeAttachments(Exchange exchange, SMEVMessage message) throws Exception
     {
-        if(message != null && message.getData() != null)
+        if(message != null && message.getData() != null && message.getData().getAttachments() != null)
         {
             AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
             AttachmentsStrategy attachmentsStrategy = conf.getAttachmentsStrategy();
