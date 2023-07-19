@@ -131,9 +131,12 @@ class Smev3Configuration
         queryInformation = new QueryInformation(component.getAndRemoveParameter(parameters, "nodeId", String.class, null), component.getAndRemoveParameter(parameters, "namespaceURI", String.class, null), component.getAndRemoveParameter(parameters, "rootElementLocalName", String.class, null), type);
 
         String param = component.getAndRemoveParameter(parameters, "bodyType", String.class, Smev3BodyType.Content.toString());
-        if (param.equalsIgnoreCase(Smev3BodyType.Content.toString())) bodyType = Smev3BodyType.Content;
-        else if (param.equalsIgnoreCase(Smev3BodyType.Envelop.toString())) bodyType = Smev3BodyType.Envelop;
-        else if (param.equalsIgnoreCase(Smev3BodyType.SMEVMessage.toString())) bodyType = Smev3BodyType.SMEVMessage;
+        if (param.equalsIgnoreCase(Smev3BodyType.Content.toString()))
+            bodyType = Smev3BodyType.Content;
+        else if (param.equalsIgnoreCase(Smev3BodyType.Envelop.toString()))
+            bodyType = Smev3BodyType.Envelop;
+        else if (param.equalsIgnoreCase(Smev3BodyType.SMEVMessage.toString()))
+            bodyType = Smev3BodyType.SMEVMessage;
         else
             throw new IllegalArgumentException("Invalid bodyType: (" + param + "). Must be type in (Content, Envelop, SMEVMessage)");
 

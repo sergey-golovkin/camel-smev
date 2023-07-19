@@ -21,6 +21,7 @@ public class Smev3Endpoint extends ScheduledPollEndpoint
         Smev3Consumer consumer = new Smev3Consumer(this, processor, conf);
         setPollStrategy(consumer);
         configureConsumer(consumer);
+        consumer.setGreedy(conf.isGreedy());
         return consumer;
     }
 

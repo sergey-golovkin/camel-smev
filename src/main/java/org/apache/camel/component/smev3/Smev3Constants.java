@@ -157,7 +157,20 @@ public class Smev3Constants
         }
     }
 
+    public static String toString(Attachment attachment)
+    {
+        StringBuffer sb = new StringBuffer();
+        attachment.getHeaderNames().forEach(n -> sb.append(sb.length() > 0 ? ", " : "").append(n).append(" = ").append(attachment.getHeader(n)));
+        return "{" + sb.toString() + "}";
+    }
 
+    public static String toLine(String value)
+    {
+        if(value != null)
+            return value.replaceAll("\\s*[\\r\\n]+\\s*", "").trim();
+        else
+            return value;
+    }
     static final String SMEV3_HEADER_PREFIX = "CamelSmev3";
 
     @Metadata(description = "Идентификатор, присвоенный сообщению отправителем. Генерируется в соответствии с RFC-4122, по варианту 1 (на основании MAC-адреса и текущего времени).")

@@ -37,6 +37,7 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
     private final Signer signer;
     private final ApacheFTPTransport laTransport;
     private SMEVMessage message;
+    private Exchange exchange;
     private Boolean accepted;
     private final List<DataHandler> attachments = new ArrayList<>();
 
@@ -44,7 +45,6 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
     {
         super(endpoint, processor);
         this.conf = conf;
-        this.setGreedy(conf.isGreedy());
 
         try
         {
@@ -75,12 +75,20 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
     {
         try
         {
-            Exchange exchange = this.getEndpoint().createExchange(ExchangePattern.InOnly);
             accepted = null;
+            exchange = null;
             message = wsTemplate.get(conf.getQueryInformation());
 
             if (message == null)
                 return 0;
+
+            exchange = this.getEndpoint().createExchange(ExchangePattern.InOnly);
+
+            if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+                LOGGER.trace("Process SMEVMessage: ExchangeId = {} MessageId = {} SMEVMessage = {}",
+                        exchange.getExchangeId(),
+                        exchange.getMessage().getMessageId(),
+                        Smev3Constants.toLine(message.getInEnvelop()));
 
             if (message.getData() != null && message.getData().getContent() != null)
             {
@@ -107,12 +115,22 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
             }
 
             Smev3Constants.fillExchangeHeaders(exchange, message.getSMEVMetadata());
+
+            if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+                LOGGER.trace("Process exchange: ExchangeId = {} MessageId = {} Headers = {} Properties = {} Body = {}",
+                        exchange.getExchangeId(),
+                        exchange.getMessage().getMessageId(),
+                        exchange.getMessage().getHeaders(),
+                        exchange.getProperties(),
+                        Smev3Constants.toLine(exchange.getMessage().getBody(String.class)));
+
             fillExchangeAttachments(exchange, message);
 
             if(conf.isAutoAck())
                 Smev3Constants.set(exchange, Smev3Constants.SMEV3_MESSAGE_ACCEPTED, true);
 
             this.getProcessor().process(exchange);
+
             if(exchange.isFailed())
             {
                 if(exchange.getException() != null)
@@ -173,6 +191,12 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                         Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_SIGNATUREPKCS7, Base64.encode(attachment.getSignaturePKCS7()));
                         Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
 
+                        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+                            LOGGER.trace("Process exchange attachment: ExchangeId = {} MessageId = {} Headers = {}",
+                                    exchange.getExchangeId(),
+                                    exchange.getMessage().getMessageId(),
+                                    Smev3Constants.toString(a));
+
                         if (attachmentsStrategy.process(exchange, a, dataHandler))
                             attachmentMessage.addAttachmentObject(mtomAttachment.getAttachmentId(), a);
                     }
@@ -208,6 +232,12 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
                         Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_PASSPORTID, attachment.getPassportId());
                         Smev3Constants.set(a, Smev3Constants.SMEV3_ATTACHMENT_HASH, largeAttachment.getHash());
 
+                        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+                            LOGGER.trace("Process exchange attachment: ExchangeId = {} MessageId = {} Headers = {}",
+                                    exchange.getExchangeId(),
+                                    exchange.getMessage().getMessageId(),
+                                    Smev3Constants.toString(a));
+
                         if (attachmentsStrategy.process(exchange, a, dataHandler))
                             attachmentMessage.addAttachmentObject(largeAttachment.getUuid().toString(), a);
                     }
@@ -230,15 +260,25 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
         try
         {
             if(polledMessages > 0 && accepted != null && conf.getQueryInformation().getType() != ProcessingInformation.Type.STATUS)
+            {
+                if(LOGGER.isTraceEnabled())
+                    LOGGER.trace("Ack SMEVMessage: ExchangeId = {} MessageId = {}",
+                            exchange.getExchangeId(),
+                            exchange.getMessage().getMessageId());
+
                 wsTemplate.ack(message.getSMEVMetadata(), accepted); // true, если ЭП-СМЭВ прошла валидацию и сообщение передано ИС. false, если ЭП-СМЭВ отвергнута, и сообщение проигнорировано.
+            }
         }
         catch (SMEVException ex)
         {
-            LOGGER.error("ack: " + message.getSMEVMetadata().getMessageIdentity().getMessageId(), ex);
+            LOGGER.error("Ack SMEVMessage: ExchangeId = {} MessageId = {} SMEVMessageId = {} Exception = {}",
+                    exchange.getExchangeId(),
+                    exchange.getMessage().getMessageId(),
+                    message.getSMEVMetadata().getMessageIdentity().getMessageId(),
+                    Smev3Constants.toLine(Smev3Constants.printException(ex)));
         }
         finally
         {
-            message = null;
             accepted = null;
         }
     }
@@ -246,10 +286,16 @@ public class Smev3Consumer extends ScheduledPollConsumer implements PollingConsu
     @Override
     public boolean rollback(Consumer consumer, Endpoint endpoint, int retryCounter, Exception cause) throws Exception
     {
-        LOGGER.error("stop procesing! rollback", cause);
+        if(exchange != null)
+        {
+            LOGGER.error("Rollback SMEVMessage: ExchangeId = {} MessageId = {} Exception = {}",
+                    exchange.getExchangeId(),
+                    exchange.getMessage().getMessageId(),
+                    Smev3Constants.toLine(Smev3Constants.printException(cause)));
+        }
 
         Thread.sleep(conf.getErrorDelay());
-        message = null;
+
         return false; // false = no retry
     }
 }

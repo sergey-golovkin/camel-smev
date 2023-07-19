@@ -8,6 +8,8 @@ import org.apache.camel.component.smev3.utils.ApacheFTPTransport;
 import org.apache.camel.support.DefaultProducer;
 import org.apache.xerces.impl.dv.util.Base64;
 import org.apache.xml.utils.XMLChar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.*;
 import ru.voskhod.crypto.util.SmevTransformUtil;
 import ru.voskhod.crypto.util.XMLTransformHelper;
@@ -41,6 +43,7 @@ import java.util.*;
 
 public class Smev3Producer extends DefaultProducer
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Smev3Producer.class);
     private final Smev3Configuration conf;
     private final IdentityService identityService;
     private final WSTemplate wsTemplate;
@@ -80,6 +83,14 @@ public class Smev3Producer extends DefaultProducer
     @Override
     public void process(final Exchange exchange) throws Exception
     {
+        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+            LOGGER.trace("Process exchange: ExchangeId = {} MessageId = {} Headers = {} Properties = {} Body = {}",
+                        exchange.getExchangeId(),
+                        exchange.getMessage().getMessageId(),
+                        exchange.getMessage().getHeaders(),
+                        exchange.getProperties(),
+                        Smev3Constants.toLine(exchange.getMessage().getBody(String.class)));
+
         if(conf.getBodyType().equals(Smev3Configuration.Smev3BodyType.Content))
         {
             String messageId = Smev3Constants.get(exchange, Smev3Constants.SMEV3_MESSAGE_ID, identityService.generateUUID(), String.class);
@@ -136,6 +147,7 @@ public class Smev3Producer extends DefaultProducer
                 SMEVMetadata smevMetadata = new SMEVMetadata(new SMEVMetadata.MessageIdentity(messageId, referenceMessageId, transactionCode), null);
                 SMEVContext smevContext = new SMEVContext(idTransport, null);
                 smevMetadata.setSmevContext(smevContext);
+
                 wsTemplate.ack(smevMetadata, accepted); // true, если ЭП-СМЭВ прошла валидацию и сообщение передано ИС. false, если ЭП-СМЭВ отвергнута, и сообщение проигнорировано.
             }
             else
@@ -156,8 +168,21 @@ public class Smev3Producer extends DefaultProducer
 
     private void sendAndProcessResult(Exchange exchange, SMEVMessage message) throws SMEVException
     {
+        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+            LOGGER.trace("Send SMEVMessage: ExchangeId = {} MessageId = {}",
+                         exchange.getExchangeId(),
+                         exchange.getMessage().getMessageId());
+
         SMEVMessage result = wsTemplate.send(message);
         Smev3Constants.fillExchangeHeaders(exchange, result.getSMEVMetadata());
+
+        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+            LOGGER.trace("Process exchange after send: ExchangeId = {} MessageId = {} Headers = {} Properties = {} Body = {}",
+                    exchange.getExchangeId(),
+                    exchange.getMessage().getMessageId(),
+                    exchange.getMessage().getHeaders(),
+                    exchange.getProperties(),
+                    Smev3Constants.toLine(exchange.getMessage().getBody(String.class)));
     }
 
     private Element getContent(Object body) throws Exception
@@ -187,11 +212,25 @@ public class Smev3Producer extends DefaultProducer
         List<SMEVAttachment> attachments = new ArrayList<>();
         AttachmentMessage attachmentMessage = exchange.getIn(AttachmentMessage.class);
 
+        if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+            LOGGER.trace("Process exchange attachments: ExchangeId = {} MessageId = {} hasAttachments = {}",
+                         exchange.getExchangeId(),
+                         exchange.getMessage().getMessageId(),
+                         attachmentMessage.hasAttachments());
+
         if(attachmentMessage != null && attachmentMessage.hasAttachments())
         {
             for(Map.Entry<String, Attachment> el : attachmentMessage.getAttachmentObjects().entrySet())
             {
                 Attachment attachment = el.getValue();
+
+                if(LOGGER.isTraceEnabled() && exchange.getMessage() != null)
+                    LOGGER.trace("Process exchange attachment: ExchangeId = {} MessageId = {} Attachment = {} Headers = {}",
+                                 exchange.getExchangeId(),
+                                 exchange.getMessage().getMessageId(),
+                                 el.getKey(),
+                                 Smev3Constants.toString(attachment));
+
                 DataHandler dataHandler = attachment.getDataHandler();
                 int length = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_LENGTH, conf.getLargeAttachmentThreshold(), Integer.class);
                 String attachmentName = Smev3Constants.get(attachment, Smev3Constants.SMEV3_ATTACHMENT_NAME, el.getKey(), String.class);
