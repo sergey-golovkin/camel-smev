@@ -43,6 +43,7 @@ public class ApacheFTPTransport
 
             LOGGER.debug("connected to: \"{}\"", config.getAddress());
             ftpClient.enterLocalPassiveMode();
+            ftpClient.setControlEncoding("UTF-8");
         }
         catch (Exception ex)
         {
@@ -83,7 +84,7 @@ public class ApacheFTPTransport
         catch (Exception ex)
         {
             LOGGER.error("disconnect failure: {}", ex.getMessage(), ex);
-            throw new SMEVRuntimeException(ex.getMessage(), ex);
+            //throw new SMEVRuntimeException(ex.getMessage(), ex);
         }
     }
 
