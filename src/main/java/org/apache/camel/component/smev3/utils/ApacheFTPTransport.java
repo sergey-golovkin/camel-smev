@@ -30,6 +30,7 @@ public class ApacheFTPTransport
     {
         try
         {
+            ftpClient.setControlEncoding("UTF-8");
             String[] parts = config.getAddress().split(":", 2);
             if(parts.length == 1)
                 ftpClient.connect(parts[0]);
@@ -43,7 +44,6 @@ public class ApacheFTPTransport
 
             LOGGER.debug("connected to: \"{}\"", config.getAddress());
             ftpClient.enterLocalPassiveMode();
-            ftpClient.setControlEncoding("UTF-8");
         }
         catch (Exception ex)
         {
